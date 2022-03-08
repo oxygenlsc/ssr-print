@@ -1,0 +1,17 @@
+* {
+  box-sizing: border-box;
+}
+@media print {
+  h2 {
+    margin: 10px;
+  }
+  tr {
+    page-break-before: auto;
+    page-break-inside: avoid !important;
+  }
+}
+body {
+  font-family: 'FZLanTingHeiS-R-GB';
+  margin: 0;
+  padding: 0;
+}

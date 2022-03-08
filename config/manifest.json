@@ -1,10 +1,12 @@
 {
+  "common.js": "/public/js/chunk/common.js",
   "runtime.js": "/public/js/runtime.js",
   "test/index.js": "/public/js/chunk/test/index.js",
   "deps": {
     "test/index.js": {
       "js": [
         "/public/js/runtime.js",
+        "/public/js/chunk/common.js",
         "/public/js/chunk/test/index.js"
       ],
       "css": []

@@ -1,5 +1,5 @@
 node_modules
-view
+app/view
 docs
 logs
 public

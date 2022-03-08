@@ -7,20 +7,32 @@ module.exports = app => {
   // exports.siteFile = {
   //   '/favicon.ico': fs.readFileSync(path.join(app.baseDir, 'app/web/asset/images/favicon.ico'))
   // };
-
+  const servicePort = 9763;
+  exports.cluster = {
+    listen: {
+      path: '',
+      port: servicePort,
+      hostname: '0.0.0.0',
+    },
+  };
+  // @TODO 后续需要传递csrf，暂时先关闭安全校验
   exports.vuessr = {
     layout: path.join(app.baseDir, 'app/web/view/layout.html'),
+    injectJs: false,
+      // 替换css为内联style
+    injectCss: true,
     renderOptions: {
-      basedir: path.join(app.baseDir, 'app/view')
+      template:
+      '<!DOCTYPE html><html lang="en"><head><title>打印服务</title></head><body><!--vue-ssr-outlet--></body></html>',
     },
-    injectRes:[
-      {
-        url: 'https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.2/css/swiper.min.css'
-      },
-      {
-        url: 'https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.2/js/swiper.min.js'
-      }
-    ]
+    // injectRes:[
+    //   {
+    //     url: 'https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.2/css/swiper.min.css'
+    //   },
+    //   {
+    //     url: 'https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.2/js/swiper.min.js'
+    //   }
+    // ]
   };
 
   exports.logger = {
@@ -42,10 +54,7 @@ module.exports = app => {
 
   exports.security = {
     csrf: {
-      ignoreJSON: false,
-      cookieName: 'csrfToken',
-      sessionName: 'csrfToken',
-      headerName: 'x-csrf-token'
+      enable: false,
     },
     xframe: {
       enable: false,

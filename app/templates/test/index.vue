@@ -1,13 +1,14 @@
 <template>
-  <h1>123</h1>
+  <h1 class="red">123</h1>
 </template>
 
 <script>
+import './index.less'
 export default {
 
 }
 </script>
 
-<style>
+<style lang='less'>
 
 </style>
