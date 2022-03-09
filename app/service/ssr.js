@@ -1,9 +1,8 @@
 
 const {Service} = require('egg');
 const mockData = require('../mock');
-const { getFinalContent } = require('../lib/utils') ;
-
-// const Result = require('../lib/result');
+const { getFinalContent, getFinalPdf } = require('../lib/utils') ;
+const Result = require('../lib/result');
 module.exports = class SSR extends Service {
     async index() {
       const startTime = Date.now();
@@ -44,7 +43,7 @@ module.exports = class SSR extends Service {
       const { request } = ctx;
       const { body: reqBody, query, headers } = request;
       const { api, isPdf, siteData = {}, isSingle, pageSettings = {} } = reqBody;
-    //   const result = new Result();
+      const result = new Result();
       // 当参数isPdf参数为1时表示打印pdf   1: 打印pdf   其他: 不打印
       const needPdf = Number(isPdf) === 1;
       // 是否是API调用，如果是API调用，需要返回json格式；
@@ -91,14 +90,14 @@ module.exports = class SSR extends Service {
   
       const { error, data: content, hash } = ret;
       if (error) {
-        // result.setError(error, ctx.logger);
+        result.setError(error, ctx.logger);
       } else {
-        // result.setData(content, hash);
+        result.setData(content, hash);
       }
       console.log(content,'content')
-      // ctx.body = isApiCall ? result : content;
-      ctx.body =  content;
-      return content;
+      ctx.body = isApiCall ? result : content;
+      // ctx.body =  content;
+      return result;
     }
   
      async htmlToPdf(html) {
@@ -107,7 +106,7 @@ module.exports = class SSR extends Service {
       const { body: reqBody } = request;
       const { pageSettings = {} } = reqBody;
       
-    //   let result = new Result();
+      let result = new Result();
       const { error, data: content, hash } = await getFinalPdf(
         [
           {
@@ -118,9 +117,9 @@ module.exports = class SSR extends Service {
         ctx,
       );
       if (error) {
-        // result.setError(error, ctx.logger);
+        result.setError(error, ctx.logger);
       } else {
-        // result.setData(content, hash);
+        result.setData(content, hash);
         ctx.body = content;
       }
       return result;
@@ -186,9 +185,9 @@ module.exports = class SSR extends Service {
   
       const { error, data: content, hash } = ret;
       if (error) {
-        // result.setError(error, ctx.logger);
+        result.setError(error, ctx.logger);
       } else {
-        // result.setData(content, hash);
+        result.setData(content, hash);
       }
       ctx.body = isApiCall ? result : content;
       return result;

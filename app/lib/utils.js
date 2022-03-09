@@ -152,6 +152,106 @@ async function getFinalContent(groups, ctx) {
     };
   }
 }
+// HTML字符串转成PDF
+async function getFinalPdf(groups, ctx) {
+    const startTime = Date.now();
+    let content;
+    try {
+      const browser = await getPuppeteerBrowser();
+      if (!browser) {
+        throw 'initial puppeteer browser failed.';
+      }
+      const page = await browser.newPage();
+      let buffers = [];
+      const items = [];
+      for (const group of groups) {
+        items.push(group.items.join(''));
+        await prepareContent(page, group, true, ctx);
+        const { pageSettings = {} } = group;
+        const displayHeaderFooter =
+          pageSettings &&
+          !!(pageSettings.footerTemplate || pageSettings.headerTemplate);
+        if (displayHeaderFooter) {
+          // headerTemplate 和 footerTemplate， 在 displayHeaderFooter 为 true 时有默认模板，这里需要重置掉。
+          pageSettings.headerTemplate = `${headerFooterStyle}${pageSettings.headerTemplate ||
+            ''}`;
+          !pageSettings.footerTemplate &&
+            (pageSettings.footerTemplate = '&nbsp;');
+        }
+        // 避免传入大写
+        if (pageSettings.format) {
+          pageSettings.format = pageSettings.format.toLowerCase();
+        }
+  
+        if (pageSettings.format === 'auto') {
+          pageSettings.width = await page.evaluate(function () {
+            return window.document.body.offsetWidth;
+          });
+          pageSettings.height = pageSettings.height || '1500px';
+          delete pageSettings.format;
+        }
+  
+        // 如果没有设置width, height 和 format, 则默认使用a4进行渲染
+        if (!pageSettings.width && !pageSettings.height && !pageSettings.format) {
+          pageSettings.format = 'a4';
+        }
+  
+        // 如果没有设置format 并且没有设置高度，则默认1500px高度
+        if (!pageSettings.format && !pageSettings.height) {
+          pageSettings.height = '1500px';
+        }
+  
+        // 没有设置过边距，则设置一个默认的上下边距
+        if (!pageSettings.margin || !Object.keys(pageSettings.margin).length) {
+          pageSettings.margin = { top: '20px', bottom: '10px' };
+        }
+  
+        const finalPageSettings = {
+          printBackground: true,
+          preferCSSPageSize: true,
+          displayHeaderFooter,
+          ...pageSettings,
+        };
+  
+        const buffer = await page.pdf(finalPageSettings);
+        buffers.push(buffer);
+      }
+  
+      if (buffers.length > 1) {
+        const mergedPdf = await PDFDocument.create();
+        for (const buffer of buffers) {
+          const pdfA = await PDFDocument.load(buffer);
+          const copiedPagesA = await mergedPdf.copyPages(
+            pdfA,
+            pdfA.getPageIndices(),
+          );
+          copiedPagesA.forEach(page => mergedPdf.addPage(page));
+        }
+        content = await mergedPdf.saveAsBase64();
+      } else {
+        content = buffers[0].toString('base64');
+      }
+  
+      page.close();
+      ctx.logger.info(`get final pdf content, cost: ${Date.now() - startTime}`);
+  
+      return {
+        hash: md5(items.join('')),
+        data: content,
+      };
+    } catch (err) {
+      const error = ERROR_MAP.INIT_PAGE_FAILED;
+      // @ts-ignore
+      error.message = err.stack;
+      ctx.logger.error(
+        `[Pdf Render]string to pdf failed: ${JSON.stringify(error)}`,
+      );
+      return {
+        error: err,
+      };
+    }
+  }
 module.exports = {
-    getFinalContent
+    getFinalContent,
+    getFinalPdf
 }
